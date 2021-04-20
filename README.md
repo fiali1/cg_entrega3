@@ -7,7 +7,6 @@ Rodrigo Rominho Mayer - 11020716
 
 
 ### ABCg
-<hr></hr>
 Development framework accompanying the course [MCTA008-17 Computer Graphics](http://professor.ufabc.edu.br/~harlen.batagelo/cg/) at [UFABC](https://www.ufabc.edu.br/).
 
 <b>Author</b>
