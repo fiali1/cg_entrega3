@@ -1,3 +1,2 @@
-#add_subdirectory(helloworld)
-add_subdirectory(viewer4)
+add_subdirectory(miniEarth)
 

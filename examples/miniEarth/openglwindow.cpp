@@ -11,26 +11,6 @@ void OpenGLWindow::handleEvent(SDL_Event& event) {
   glm::ivec2 mousePosition;
   SDL_GetMouseState(&mousePosition.x, &mousePosition.y);
 
-  if (event.type == SDL_MOUSEMOTION) {
-    m_trackBallModel.mouseMove(mousePosition);
-    m_trackBallLight.mouseMove(mousePosition);
-  }
-  if (event.type == SDL_MOUSEBUTTONDOWN) {
-    if (event.button.button == SDL_BUTTON_LEFT) {
-      m_trackBallModel.mousePress(mousePosition);
-    }
-    if (event.button.button == SDL_BUTTON_RIGHT) {
-      m_trackBallLight.mousePress(mousePosition);
-    }
-  }
-  if (event.type == SDL_MOUSEBUTTONUP) {
-    if (event.button.button == SDL_BUTTON_LEFT) {
-      m_trackBallModel.mouseRelease(mousePosition);
-    }
-    if (event.button.button == SDL_BUTTON_RIGHT) {
-      m_trackBallLight.mouseRelease(mousePosition);
-    }
-  }
   if (event.type == SDL_MOUSEWHEEL) {
     m_zoom += (event.wheel.y > 0 ? 1.0f : -1.0f) / 5.0f;
     m_zoom = glm::clamp(m_zoom, -1.5f, 1.0f);
@@ -53,12 +33,12 @@ void OpenGLWindow::initializeGL() {
   m_mappingMode = 3;  // "From mesh" option
 
   // Initial trackball spin
-  m_trackBallModel.setAxis(glm::normalize(glm::vec3(1, 1, 1)));
+  m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.25, 1, 0.5)));
   m_trackBallModel.setVelocity(0.0001f);
 }
 
 void OpenGLWindow::loadModel(std::string_view path) {
-  m_model.loadDiffuseTexture(getAssetsPath() + "maps/Night_lights_2K.png");
+  m_model.loadDiffuseTexture(getAssetsPath() + "maps/Diffuse_2K.png");
   m_model.loadFromFile(path);
   m_model.setupVAO(m_programs.at(m_currentProgramIndex));
   m_trianglesToDraw = m_model.getNumTriangles();
@@ -268,31 +248,6 @@ void OpenGLWindow::paintUI() {
         m_currentProgramIndex = currentIndex;
         m_model.setupVAO(m_programs.at(m_currentProgramIndex));
       }
-    }
-
-    if (!m_model.isUVMapped()) {
-      ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mesh has no UV coords.");
-    }
-
-    // UV mapping box
-    {
-      std::vector<std::string> comboItems{"Triplanar", "Cylindrical",
-                                          "Spherical"};
-
-      if (m_model.isUVMapped()) comboItems.emplace_back("From mesh");
-
-      ImGui::PushItemWidth(120);
-      if (ImGui::BeginCombo("UV mapping",
-                            comboItems.at(m_mappingMode).c_str())) {
-        for (auto index : iter::range(comboItems.size())) {
-          const bool isSelected{m_mappingMode == static_cast<int>(index)};
-          if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected))
-            m_mappingMode = index;
-          if (isSelected) ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-      }
-      ImGui::PopItemWidth();
     }
 
     ImGui::End();
