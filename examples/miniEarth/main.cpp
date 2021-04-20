@@ -8,9 +8,9 @@ int main(int argc, char **argv) {
     abcg::Application app(argc, argv);
 
     auto window{std::make_unique<OpenGLWindow>()};
-    window->setOpenGLSettings({.samples = 0});
+    window->setOpenGLSettings({.samples = 0, .vsync = true});
     window->setWindowSettings(
-        {.width = 600, .height = 600, .title = "Model Viewer (version 4)"});
+        {.width = 600, .height = 600, .title = "Mini Earth"});
 
     app.run(window);
   } catch (abcg::Exception &exception) {

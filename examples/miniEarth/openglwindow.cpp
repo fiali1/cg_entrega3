@@ -29,16 +29,18 @@ void OpenGLWindow::initializeGL() {
   }
 
   // Load default model
-  loadModel(getAssetsPath() + "Earth 2K.obj");
-  m_mappingMode = 3;  // "From mesh" option
+  loadModel(getAssetsPath() + "Earth2K.obj");
+  m_mappingMode = 2;  // "From mesh" option
 
-  // Initial trackball spin
-  m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.25, 1, 0.5)));
+  // Define o ângulo de rotação para se assemelhar à rotação da Terra
+  // -0.1, 1, 0
+  m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.1, 1, 0.05)));
   m_trackBallModel.setVelocity(0.0001f);
 }
 
 void OpenGLWindow::loadModel(std::string_view path) {
-  m_model.loadDiffuseTexture(getAssetsPath() + "maps/Diffuse_2K.png");
+  m_model.loadDiffuseTexture(getAssetsPath() + "maps/Earth.png");
+  m_model.loadNormalTexture(getAssetsPath() + "maps/EarthNormal.png");
   m_model.loadFromFile(path);
   m_model.setupVAO(m_programs.at(m_currentProgramIndex));
   m_trianglesToDraw = m_model.getNumTriangles();
@@ -74,12 +76,14 @@ void OpenGLWindow::paintGL() {
   GLint KdLoc{glGetUniformLocation(program, "Kd")};
   GLint KsLoc{glGetUniformLocation(program, "Ks")};
   GLint diffuseTexLoc{glGetUniformLocation(program, "diffuseTex")};
+  GLint normalTexLoc{glGetUniformLocation(program, "normalTex")};
   GLint mappingModeLoc{glGetUniformLocation(program, "mappingMode")};
 
   // Set uniform variables used by every scene object
   glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, &m_viewMatrix[0][0]);
   glUniformMatrix4fv(projMatrixLoc, 1, GL_FALSE, &m_projMatrix[0][0]);
   glUniform1i(diffuseTexLoc, 0);
+  glUniform1i(normalTexLoc, 1);
   glUniform1i(mappingModeLoc, m_mappingMode);
 
   auto lightDirRotated{m_trackBallLight.getRotation() * m_lightDir};
@@ -116,15 +120,24 @@ void OpenGLWindow::paintUI() {
                                 m_viewportHeight * 0.8f);
 
   // File browser for textures
-  static ImGui::FileBrowser fileDialogTex;
-  fileDialogTex.SetTitle("Load Texture");
-  fileDialogTex.SetTypeFilters({".jpg", ".png"});
-  fileDialogTex.SetWindowSize(m_viewportWidth * 0.8f, m_viewportHeight * 0.8f);
+  static ImGui::FileBrowser fileDialogDiffuseMap;
+  fileDialogDiffuseMap.SetTitle("Load Diffuse Map");
+  fileDialogDiffuseMap.SetTypeFilters({".jpg", ".png"});
+  fileDialogDiffuseMap.SetWindowSize(m_viewportWidth * 0.8f,
+                                     m_viewportHeight * 0.8f);
+
+  // File browser for normal maps
+  static ImGui::FileBrowser fileDialogNormalMap;
+  fileDialogNormalMap.SetTitle("Load Normal Map");
+  fileDialogNormalMap.SetTypeFilters({".jpg", ".png"});
+  fileDialogNormalMap.SetWindowSize(m_viewportWidth * 0.8f,
+                                    m_viewportHeight * 0.8f);
 
 // Only in WebGL
 #if defined(__EMSCRIPTEN__)
   fileDialogModel.SetPwd(getAssetsPath());
-  fileDialogTex.SetPwd(getAssetsPath() + "/maps");
+  fileDialogDiffuseMap.SetPwd(getAssetsPath() + "/maps");
+  fileDialogNormalMap.SetPwd(getAssetsPath() + "/maps");
 #endif
 
   // Create main window widget
@@ -144,17 +157,20 @@ void OpenGLWindow::paintUI() {
     // Menu
     {
       bool loadModel{};
-      bool loadDiffTex{};
+      bool loadDiffMap{};
+      bool loadNormalMap{};
       if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
           ImGui::MenuItem("Load 3D Model...", nullptr, &loadModel);
-          ImGui::MenuItem("Load Diffuse Texture...", nullptr, &loadDiffTex);
+          ImGui::MenuItem("Load Diffuse Map...", nullptr, &loadDiffMap);
+          ImGui::MenuItem("Load Normal Map...", nullptr, &loadNormalMap);
           ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
       }
       if (loadModel) fileDialogModel.Open();
-      if (loadDiffTex) fileDialogTex.Open();
+      if (loadDiffMap) fileDialogDiffuseMap.Open();
+      if (loadNormalMap) fileDialogNormalMap.Open();
     }
 
     // Slider will be stretched horizontally
@@ -250,6 +266,31 @@ void OpenGLWindow::paintUI() {
       }
     }
 
+    if (!m_model.isUVMapped()) {
+      ImGui::TextColored(ImVec4(1, 1, 0, 1), "Mesh has no UV coords.");
+    }
+
+     // UV mapping box
+    {
+      std::vector<std::string> comboItems{"Triplanar", "Cylindrical",
+                                          "Spherical"};
+
+      if (m_model.isUVMapped()) comboItems.emplace_back("From mesh");
+
+      ImGui::PushItemWidth(120);
+      if (ImGui::BeginCombo("UV mapping",
+                            comboItems.at(m_mappingMode).c_str())) {
+        for (auto index : iter::range(comboItems.size())) {
+          const bool isSelected{m_mappingMode == static_cast<int>(index)};
+          if (ImGui::Selectable(comboItems.at(index).c_str(), isSelected))
+            m_mappingMode = index;
+          if (isSelected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::PopItemWidth();
+    }
+
     ImGui::End();
   }
 
@@ -294,19 +335,20 @@ void OpenGLWindow::paintUI() {
     loadModel(fileDialogModel.GetSelected().string());
     fileDialogModel.ClearSelected();
 
-    if (m_model.isUVMapped()) {
-      // Use mesh texture coordinates if available...
-      m_mappingMode = 3;
-    } else {
-      // ...or triplanar mapping otherwise
-      m_mappingMode = 0;
-    }
+    // Define Mapping Mode como esférico
+    m_mappingMode = 2;
   }
 
-  fileDialogTex.Display();
-  if (fileDialogTex.HasSelected()) {
-    m_model.loadDiffuseTexture(fileDialogTex.GetSelected().string());
-    fileDialogTex.ClearSelected();
+  fileDialogDiffuseMap.Display();
+  if (fileDialogDiffuseMap.HasSelected()) {
+    m_model.loadDiffuseTexture(fileDialogDiffuseMap.GetSelected().string());
+    fileDialogDiffuseMap.ClearSelected();
+  }
+
+  fileDialogNormalMap.Display();
+  if (fileDialogNormalMap.HasSelected()) {
+    m_model.loadNormalTexture(fileDialogNormalMap.GetSelected().string());
+    fileDialogNormalMap.ClearSelected();
   }
 }
 
