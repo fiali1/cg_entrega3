@@ -1,6 +1,7 @@
 #include "openglwindow.hpp"
 
 #include <imgui.h>
+#include <fmt/core.h>
 
 #include <cppitertools/itertools.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -30,7 +31,8 @@ void OpenGLWindow::initializeGL() {
 
   // Load default model
   loadModel(getAssetsPath() + "Earth2K.obj");
-  m_mappingMode = 2;  // "From mesh" option
+  m_mappingMode = 2;
+  m_typeIndex = 0;
 
   // Load cubemap
   m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
@@ -74,7 +76,9 @@ void OpenGLWindow::initializeSkybox() {
 }
 
 void OpenGLWindow::loadModel(std::string_view path) {
-  m_model.loadDiffuseTexture(getAssetsPath() + "maps/Earth.png");
+  std::string viewType = getViewType(m_typeIndex);
+
+  m_model.loadDiffuseTexture(getAssetsPath() + "maps/" + viewType + ".png");
   m_model.loadNormalTexture(getAssetsPath() + "maps/EarthNormal.png");
   m_model.loadFromFile(path);
   m_model.setupVAO(m_programs.at(m_currentProgramIndex));
@@ -179,6 +183,20 @@ void OpenGLWindow::renderSkybox() {
   glUseProgram(0);
 }
 
+std::string OpenGLWindow::getViewType(int index) {
+    std::string file;
+    if (index == 0)
+      file = "Earth";
+    else if (index == 1)
+      file = "EarthNight";
+    else if (index == 2)
+      file = "EarthWoWater";
+    else
+      return "Earth";
+
+    return file;
+}
+
 void OpenGLWindow::paintUI() {
   abcg::OpenGLWindow::paintUI();
 
@@ -212,7 +230,7 @@ void OpenGLWindow::paintUI() {
 
   // Create main window widget
   {
-    auto widgetSize{ImVec2(222, 190)};
+    auto widgetSize{ImVec2(222, 250)};
 
     if (!m_model.isUVMapped()) {
       // Add extra space for static text
@@ -332,6 +350,33 @@ void OpenGLWindow::paintUI() {
       // Set up VAO if shader program has changed
       if (static_cast<int>(currentIndex) != m_currentProgramIndex) {
         m_currentProgramIndex = currentIndex;
+        m_model.setupVAO(m_programs.at(m_currentProgramIndex));
+      }
+    }
+
+    // View Type combo box
+    {
+      static std::size_t currentIndex{};
+
+      ImGui::PushItemWidth(120);
+      if (ImGui::BeginCombo("View Type", m_viewTypesTags.at(currentIndex))) {
+        for (auto index : iter::range(m_viewTypesTags.size())) {
+          const bool isSelected{currentIndex == index};
+          if (ImGui::Selectable(m_viewTypesTags.at(index), isSelected))
+            currentIndex = index;
+          if (isSelected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+      ImGui::PopItemWidth();
+
+      // Set up VAO if shader program has changed
+      if (static_cast<int>(currentIndex) != m_typeIndex) {
+        m_typeIndex = currentIndex;
+        
+        std::string viewType = getViewType(m_typeIndex);
+        m_model.loadDiffuseTexture(getAssetsPath() + "maps/" + viewType + ".png");
+
         m_model.setupVAO(m_programs.at(m_currentProgramIndex));
       }
     }

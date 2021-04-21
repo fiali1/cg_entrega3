@@ -38,6 +38,13 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   std::vector<GLuint> m_programs;
   int m_currentProgramIndex{};
 
+  // View Types
+  std::vector<const char*> m_viewTypesTags{
+      "Basic", "Night Lights", "No Water"};
+  std::vector<GLuint> m_viewTypes;
+  int m_typeIndex{};
+  std::string getViewType(int index);
+
   // Mapping mode
   // 0: triplanar; 1: cylindrical; 2: spherical; 3: from mesh
   int m_mappingMode{};

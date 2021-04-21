@@ -30,6 +30,7 @@ class Model {
   Model& operator=(Model&&) = default;
 
   void loadDiffuseTexture(std::string_view path);
+  void loadComplementaryTexture(std::string_view path);
   void loadNormalTexture(std::string_view path);
   void loadCubeTexture(const std::string& path);
   void loadFromFile(std::string_view path, bool standardize = true);
@@ -59,6 +60,7 @@ class Model {
   glm::vec4 m_Ks;
   float m_shininess;
   GLuint m_diffuseTexture{};
+  GLuint m_complementaryTexture{};
   GLuint m_normalTexture{};
   GLuint m_cubeTexture{};
 
