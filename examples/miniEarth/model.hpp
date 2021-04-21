@@ -31,6 +31,7 @@ class Model {
 
   void loadDiffuseTexture(std::string_view path);
   void loadNormalTexture(std::string_view path);
+  void loadCubeTexture(const std::string& path);
   void loadFromFile(std::string_view path, bool standardize = true);
   void render(int numTriangles = -1) const;
   void setupVAO(GLuint program);
@@ -46,6 +47,8 @@ class Model {
 
   [[nodiscard]] bool isUVMapped() const { return m_hasTexCoords; }
 
+  [[nodiscard]] GLuint getCubeTexture() const { return m_cubeTexture; }
+
  private:
   GLuint m_VAO{};
   GLuint m_VBO{};
@@ -57,6 +60,7 @@ class Model {
   float m_shininess;
   GLuint m_diffuseTexture{};
   GLuint m_normalTexture{};
+  GLuint m_cubeTexture{};
 
   std::vector<Vertex> m_vertices;
   std::vector<GLuint> m_indices;

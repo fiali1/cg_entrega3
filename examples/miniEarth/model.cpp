@@ -158,6 +158,15 @@ void Model::loadNormalTexture(std::string_view path) {
   m_normalTexture = abcg::opengl::loadTexture(path);
 }
 
+void Model::loadCubeTexture(const std::string& path) {
+  if (!std::filesystem::exists(path)) return;
+
+  glDeleteTextures(1, &m_cubeTexture);
+  m_cubeTexture = abcg::opengl::loadCubemap(
+      {path + "px.png", path + "nx.png", path + "py.png",
+       path + "ny.png", path + "pz.png", path + "nz.png"});
+}
+
 void Model::loadFromFile(std::string_view path, bool standardize) {
   auto basePath{std::filesystem::path{path}.parent_path().string() + "/"};
 
@@ -291,6 +300,9 @@ void Model::render(int numTriangles) const {
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, m_normalTexture);
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubeTexture);
 
   // Set minification and magnification parameters
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

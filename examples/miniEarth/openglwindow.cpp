@@ -32,10 +32,45 @@ void OpenGLWindow::initializeGL() {
   loadModel(getAssetsPath() + "Earth2K.obj");
   m_mappingMode = 2;  // "From mesh" option
 
+  // Load cubemap
+  m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+
   // Define o ângulo de rotação para se assemelhar à rotação da Terra
   // -0.1, 1, 0
   m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.1, 1, 0.05)));
   m_trackBallModel.setVelocity(0.0001f);
+
+  initializeSkybox();
+}
+
+void OpenGLWindow::initializeSkybox() {
+  // Create skybox program
+  auto path{getAssetsPath() + "shaders/" + m_skyShaderName};
+  m_skyProgram = createProgramFromFile(path + ".vert", path + ".frag");
+
+  // Generate VBO
+  glGenBuffers(1, &m_skyVBO);
+  glBindBuffer(GL_ARRAY_BUFFER, m_skyVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(m_skyPositions), m_skyPositions.data(),
+               GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  // Get location of attributes in the program
+  GLint positionAttribute{glGetAttribLocation(m_skyProgram, "inPosition")};
+
+  // Create VAO
+  glGenVertexArrays(1, &m_skyVAO);
+
+  // Bind vertex attributes to current VAO
+  glBindVertexArray(m_skyVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, m_skyVBO);
+  glEnableVertexAttribArray(positionAttribute);
+  glVertexAttribPointer(positionAttribute, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  // End of binding to current VAO
+  glBindVertexArray(0);
 }
 
 void OpenGLWindow::loadModel(std::string_view path) {
@@ -77,14 +112,20 @@ void OpenGLWindow::paintGL() {
   GLint KsLoc{glGetUniformLocation(program, "Ks")};
   GLint diffuseTexLoc{glGetUniformLocation(program, "diffuseTex")};
   GLint normalTexLoc{glGetUniformLocation(program, "normalTex")};
+  GLint cubeTexLoc{glGetUniformLocation(program, "cubeTex")};
   GLint mappingModeLoc{glGetUniformLocation(program, "mappingMode")};
+  GLint texMatrixLoc{glGetUniformLocation(program, "texMatrix")};
 
   // Set uniform variables used by every scene object
   glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, &m_viewMatrix[0][0]);
   glUniformMatrix4fv(projMatrixLoc, 1, GL_FALSE, &m_projMatrix[0][0]);
   glUniform1i(diffuseTexLoc, 0);
   glUniform1i(normalTexLoc, 1);
+  glUniform1i(cubeTexLoc, 2);
   glUniform1i(mappingModeLoc, m_mappingMode);
+
+  glm::mat3 texMatrix{m_trackBallLight.getRotation()};
+  glUniformMatrix3fv(texMatrixLoc, 1, GL_TRUE, &texMatrix[0][0]);
 
   auto lightDirRotated{m_trackBallLight.getRotation() * m_lightDir};
   glUniform4fv(lightDirLoc, 1, &lightDirRotated.x);
@@ -103,9 +144,38 @@ void OpenGLWindow::paintGL() {
   glUniform4fv(KaLoc, 1, &m_Ka.x);
   glUniform4fv(KdLoc, 1, &m_Kd.x);
   glUniform4fv(KsLoc, 1, &m_Ks.x);
-
   m_model.render(m_trianglesToDraw);
 
+  
+  renderSkybox();
+}
+
+void OpenGLWindow::renderSkybox() {
+  glUseProgram(m_skyProgram);
+
+  // Get location of uniform variables
+  GLint viewMatrixLoc{glGetUniformLocation(m_skyProgram, "viewMatrix")};
+  GLint projMatrixLoc{glGetUniformLocation(m_skyProgram, "projMatrix")};
+  GLint skyTexLoc{glGetUniformLocation(m_skyProgram, "skyTex")};
+
+  // Set uniform variables
+  auto viewMatrix{m_trackBallLight.getRotation()};
+  glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, &viewMatrix[0][0]);
+  glUniformMatrix4fv(projMatrixLoc, 1, GL_FALSE, &m_projMatrix[0][0]);
+  glUniform1i(skyTexLoc, 0);
+
+  glBindVertexArray(m_skyVAO);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, m_model.getCubeTexture());
+
+  glEnable(GL_CULL_FACE);
+  glFrontFace(GL_CW);
+  glDepthFunc(GL_LEQUAL);
+  glDrawArrays(GL_TRIANGLES, 0, m_skyPositions.size());
+  glDepthFunc(GL_LESS);
+
+  glBindVertexArray(0);
   glUseProgram(0);
 }
 
@@ -364,6 +434,12 @@ void OpenGLWindow::terminateGL() {
   for (const auto& program : m_programs) {
     glDeleteProgram(program);
   }
+}
+
+void OpenGLWindow::terminateSkybox() {
+  glDeleteProgram(m_skyProgram);
+  glDeleteBuffers(1, &m_skyVBO);
+  glDeleteVertexArrays(1, &m_skyVAO);
 }
 
 void OpenGLWindow::update() {

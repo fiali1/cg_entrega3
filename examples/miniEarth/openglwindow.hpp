@@ -52,8 +52,40 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   glm::vec4 m_Ks;
   float m_shininess{};
 
+  // Skybox vertices
+  const std::array<glm::vec3, 36>  m_skyPositions{
+    // Front
+    glm::vec3{-1, -1, +1}, glm::vec3{+1, -1, +1}, glm::vec3{+1, +1, +1},
+    glm::vec3{-1, -1, +1}, glm::vec3{+1, +1, +1}, glm::vec3{-1, +1, +1},
+    // Back
+    glm::vec3{+1, -1, -1}, glm::vec3{-1, -1, -1}, glm::vec3{-1, +1, -1},
+    glm::vec3{+1, -1, -1}, glm::vec3{-1, +1, -1}, glm::vec3{+1, +1, -1},
+    // Right
+    glm::vec3{+1, -1, -1}, glm::vec3{+1, +1, -1}, glm::vec3{+1, +1, +1},
+    glm::vec3{+1, -1, -1}, glm::vec3{+1, +1, +1}, glm::vec3{+1, -1, +1},
+    // Left
+    glm::vec3{-1, -1, +1}, glm::vec3{-1, +1, +1}, glm::vec3{-1, +1, -1},
+    glm::vec3{-1, -1, +1}, glm::vec3{-1, +1, -1}, glm::vec3{-1, -1, -1},
+    // Top
+    glm::vec3{-1, +1, +1}, glm::vec3{+1, +1, +1}, glm::vec3{+1, +1, -1},
+    glm::vec3{-1, +1, +1}, glm::vec3{+1, +1, -1}, glm::vec3{-1, +1, -1},
+    // Bottom
+    glm::vec3{-1, -1, -1}, glm::vec3{+1, -1, -1}, glm::vec3{+1, -1, +1},
+    glm::vec3{-1, -1, -1}, glm::vec3{+1, -1, +1}, glm::vec3{-1, -1, +1}
+  };
+  
+  const std::string m_skyShaderName{"skybox"};
+  GLuint m_skyVAO{};
+  GLuint m_skyVBO{};
+  GLuint m_skyProgram{};
+
+  void initializeSkybox();
+  void renderSkybox();
+  void terminateSkybox();
   void loadModel(std::string_view path);
   void update();
+
+
 };
 
 #endif
