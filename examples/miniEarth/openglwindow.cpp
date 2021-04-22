@@ -191,6 +191,8 @@ std::string OpenGLWindow::getViewType(int index) {
       file = "EarthNight";
     else if (index == 2)
       file = "EarthWoWater";
+    else if (index == 3)
+      file = "EarthPolitical";
     else
       return "Earth";
 
@@ -376,8 +378,6 @@ void OpenGLWindow::paintUI() {
         
         std::string viewType = getViewType(m_typeIndex);
         m_model.loadDiffuseTexture(getAssetsPath() + "maps/" + viewType + ".png");
-
-        m_model.setupVAO(m_programs.at(m_currentProgramIndex));
       }
     }
 
