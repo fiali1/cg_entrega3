@@ -38,7 +38,6 @@ void OpenGLWindow::initializeGL() {
   m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
 
   // Define o ângulo de rotação para se assemelhar à rotação da Terra
-  // -0.1, 1, 0
   m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.1, 1, 0.05)));
   m_trackBallModel.setVelocity(0.0001f);
 
@@ -76,10 +75,15 @@ void OpenGLWindow::initializeSkybox() {
 }
 
 void OpenGLWindow::loadModel(std::string_view path) {
-  std::string viewType = getViewType(m_typeIndex);
-
-  m_model.loadDiffuseTexture(getAssetsPath() + "maps/" + viewType + ".png");
-  m_model.loadNormalTexture(getAssetsPath() + "maps/EarthNormal.png");
+  if (m_model.specialMode) {
+    m_model.loadDiffuseTexture(getAssetsPath() + "maps/Disco.png");
+    m_model.loadNormalTexture(getAssetsPath() + "maps/DiscoNormal.png");
+  }
+  else {
+    std::string viewType = getViewType(m_typeIndex);
+    m_model.loadDiffuseTexture(getAssetsPath() + "maps/" + viewType + ".png");
+    m_model.loadNormalTexture(getAssetsPath() + "maps/EarthNormal.png");
+  }
   m_model.loadFromFile(path);
   m_model.setupVAO(m_programs.at(m_currentProgramIndex));
   m_trianglesToDraw = m_model.getNumTriangles();
@@ -98,6 +102,11 @@ void OpenGLWindow::paintGL() {
   glViewport(0, 0, m_viewportWidth, m_viewportHeight);
 
   // Use currently selected program
+  if (m_model.specialMode)
+    m_currentProgramIndex = 7;
+  else
+    m_currentProgramIndex = 0;
+
   const auto program{m_programs.at(m_currentProgramIndex)};
   glUseProgram(program);
 
@@ -193,6 +202,9 @@ std::string OpenGLWindow::getViewType(int index) {
       file = "EarthWoWater";
     else if (index == 3)
       file = "EarthPolitical";
+    else if (index == 4) {
+      file = "Disco";
+    }
     else
       return "Earth";
 
@@ -376,8 +388,15 @@ void OpenGLWindow::paintUI() {
       if (static_cast<int>(currentIndex) != m_typeIndex) {
         m_typeIndex = currentIndex;
         
-        std::string viewType = getViewType(m_typeIndex);
-        m_model.loadDiffuseTexture(getAssetsPath() + "maps/" + viewType + ".png");
+        if (m_typeIndex == 4) {
+          m_model.specialMode = true;
+          loadModel(getAssetsPath() + "Disco.obj");
+          m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+        } else {
+          m_model.specialMode = false;
+          loadModel(getAssetsPath() + "Earth2K.obj");
+          m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+        }
       }
     }
 

@@ -162,9 +162,16 @@ void Model::loadCubeTexture(const std::string& path) {
   if (!std::filesystem::exists(path)) return;
 
   glDeleteTextures(1, &m_cubeTexture);
-  m_cubeTexture = abcg::opengl::loadCubemap(
-      {path + "px.png", path + "nx.png", path + "py.png",
-       path + "ny.png", path + "pz.png", path + "nz.png"});
+
+  if (!specialMode) {
+    m_cubeTexture = abcg::opengl::loadCubemap(
+        {path + "px.png", path + "nx.png", path + "py.png",
+        path + "ny.png", path + "pz.png", path + "nz.png"});
+  } else {
+    m_cubeTexture = abcg::opengl::loadCubemap(
+        {path + "pxD.png", path + "nxD.png", path + "pyD.png",
+        path + "nyD.png", path + "pzD.png", path + "nzD.png"});
+  }
 }
 
 void Model::loadFromFile(std::string_view path, bool standardize) {

@@ -34,13 +34,13 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   // Shaders
   std::vector<const char*> m_shaderNames{
       "normalmapping", "texture", "blinnphong", "phong",
-      "gouraud",       "normal",  "depth"};
+      "gouraud",       "normal",  "depth", "cubereflect"};
   std::vector<GLuint> m_programs;
   int m_currentProgramIndex{};
 
   // View Types
   std::vector<const char*> m_viewTypesTags{
-      "Basic", "Night Lights", "No Water", "Political"};
+      "Basic", "Night Lights", "No Water", "Political", "Disco"};
   std::vector<GLuint> m_viewTypes;
   int m_typeIndex{};
   std::string getViewType(int index);
