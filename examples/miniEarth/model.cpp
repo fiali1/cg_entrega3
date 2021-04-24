@@ -415,12 +415,11 @@ void Model::standardize() {
   fmt::print(stderr, "{}\n", center.y);
   fmt::print(stderr, "{}\n", center.z);
 
-  const auto scaling{2.0f / glm::length(max - min)};
+  const auto scaling{2.0f / glm::length(max - min) / 2 };
   for (auto& vertex : m_vertices) {
     vertex.position = (vertex.position - center) * scaling;
   }
 }
-
 
 void Model::standardizeMoon() {
   // Center to origin and normalize largest bound to [-1, 1]
@@ -441,7 +440,7 @@ void Model::standardizeMoon() {
 
   glm::vec3 correction(120,0,1);
   const auto center{(min + max + correction) / 2.0f};
-  const auto scaling{2.0f / glm::length(max - min) / 13.5f};
+  const auto scaling{2.0f / glm::length(max - min) / (13.5f * 2)};
   for (auto& vertex : m_vertices) {
     vertex.position = (vertex.position - center) * scaling;
   }

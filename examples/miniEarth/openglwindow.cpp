@@ -37,6 +37,7 @@ void OpenGLWindow::initializeGL() {
 
   // Load cubemap
   m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+  moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
 
   // Define o ângulo de rotação para se assemelhar à rotação da Terra
   m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.1, 1, 0.05)));
