@@ -14,7 +14,7 @@ void OpenGLWindow::handleEvent(SDL_Event& event) {
 
   if (event.type == SDL_MOUSEWHEEL) {
     m_zoom += (event.wheel.y > 0 ? 1.0f : -1.0f) / 5.0f;
-    m_zoom = glm::clamp(m_zoom, -1.5f, 1.0f);
+    // m_zoom = glm::clamp(m_zoom, -1.5f, 1.0f);
   }
 }
 
@@ -31,6 +31,7 @@ void OpenGLWindow::initializeGL() {
 
   // Load default model
   loadModel(getAssetsPath() + "Earth2K.obj");
+  loadMoonModel(getAssetsPath() + "Moon2K.obj");
   m_mappingMode = 2;
   m_typeIndex = 0;
 
@@ -85,7 +86,9 @@ void OpenGLWindow::loadModel(std::string_view path) {
     m_model.loadNormalTexture(getAssetsPath() + "maps/EarthNormal.png");
   }
   m_model.loadFromFile(path);
+
   m_model.setupVAO(m_programs.at(m_currentProgramIndex));
+
   m_trianglesToDraw = m_model.getNumTriangles();
 
   // Use material properties from the loaded model
@@ -93,6 +96,23 @@ void OpenGLWindow::loadModel(std::string_view path) {
   m_Kd = m_model.getKd();
   m_Ks = m_model.getKs();
   m_shininess = m_model.getShininess();
+}
+
+void OpenGLWindow::loadMoonModel(std::string_view path) {
+
+  moon_model.loadDiffuseTexture(getAssetsPath() + "maps/Moon.png");
+ 
+  moon_model.loadFromFile(path, true, true);
+  
+  moon_model.setupVAO(m_programs.at(m_currentProgramIndex));
+
+  moon_trianglesToDraw = moon_model.getNumTriangles();
+
+  // Use material properties from the loaded model
+  m_Ka = moon_model.getKa();
+  m_Kd = moon_model.getKd();
+  m_Ks = moon_model.getKs();
+  m_shininess = moon_model.getShininess();
 }
 
 void OpenGLWindow::paintGL() {
@@ -157,8 +177,9 @@ void OpenGLWindow::paintGL() {
   glUniform4fv(KaLoc, 1, &m_Ka.x);
   glUniform4fv(KdLoc, 1, &m_Kd.x);
   glUniform4fv(KsLoc, 1, &m_Ks.x);
-  m_model.render(m_trianglesToDraw);
 
+  m_model.render(m_trianglesToDraw);
+  moon_model.render(moon_trianglesToDraw);
   
   renderSkybox();
 }
@@ -181,6 +202,7 @@ void OpenGLWindow::renderSkybox() {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, m_model.getCubeTexture());
+  glBindTexture(GL_TEXTURE_CUBE_MAP, moon_model.getCubeTexture());
 
   glEnable(GL_CULL_FACE);
   glFrontFace(GL_CW);
@@ -278,7 +300,12 @@ void OpenGLWindow::paintUI() {
     // Slider will be stretched horizontally
     ImGui::PushItemWidth(widgetSize.x - 16);
     ImGui::SliderInt("", &m_trianglesToDraw, 0, m_model.getNumTriangles(),
-                     "%d triangles");
+      "%d triangles");
+    ImGui::PopItemWidth();
+
+    ImGui::PushItemWidth(widgetSize.x - 16);
+    ImGui::SliderInt("", &moon_trianglesToDraw, 0, moon_model.getNumTriangles(),
+      "%d moon triangles");
     ImGui::PopItemWidth();
 
     static bool faceCulling{};
@@ -365,6 +392,7 @@ void OpenGLWindow::paintUI() {
       if (static_cast<int>(currentIndex) != m_currentProgramIndex) {
         m_currentProgramIndex = currentIndex;
         m_model.setupVAO(m_programs.at(m_currentProgramIndex));
+        moon_model.setupVAO(m_programs.at(m_currentProgramIndex));
       }
     }
 
@@ -392,10 +420,12 @@ void OpenGLWindow::paintUI() {
           m_model.specialMode = true;
           loadModel(getAssetsPath() + "Disco.obj");
           m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+          moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
         } else {
           m_model.specialMode = false;
           loadModel(getAssetsPath() + "Earth2K.obj");
           m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+          moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
         }
       }
     }
@@ -476,12 +506,14 @@ void OpenGLWindow::paintUI() {
   fileDialogDiffuseMap.Display();
   if (fileDialogDiffuseMap.HasSelected()) {
     m_model.loadDiffuseTexture(fileDialogDiffuseMap.GetSelected().string());
+    moon_model.loadDiffuseTexture(fileDialogDiffuseMap.GetSelected().string());
     fileDialogDiffuseMap.ClearSelected();
   }
 
   fileDialogNormalMap.Display();
   if (fileDialogNormalMap.HasSelected()) {
     m_model.loadNormalTexture(fileDialogNormalMap.GetSelected().string());
+    moon_model.loadNormalTexture(fileDialogNormalMap.GetSelected().string());
     fileDialogNormalMap.ClearSelected();
   }
 }

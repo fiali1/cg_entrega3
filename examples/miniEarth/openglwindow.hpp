@@ -21,7 +21,9 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   int m_viewportHeight{};
 
   Model m_model;
+  Model moon_model;
   int m_trianglesToDraw{};
+  int moon_trianglesToDraw{};
 
   TrackBall m_trackBallModel;
   TrackBall m_trackBallLight;
@@ -30,6 +32,10 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   glm::mat4 m_modelMatrix{1.0f};
   glm::mat4 m_viewMatrix{1.0f};
   glm::mat4 m_projMatrix{1.0f};
+
+  glm::mat4 moon_modelMatrix{1.0f};
+  glm::mat4 moon_viewMatrix{1.0f};
+  glm::mat4 moon_projMatrix{1.0f};
 
   // Shaders
   std::vector<const char*> m_shaderNames{
@@ -90,6 +96,7 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   void renderSkybox();
   void terminateSkybox();
   void loadModel(std::string_view path);
+  void loadMoonModel(std::string_view path);
   void update();
 
 

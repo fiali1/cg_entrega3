@@ -1,10 +1,12 @@
 #include "model.hpp"
+#include <iostream>
 
 #include <fmt/core.h>
 #include <tiny_obj_loader.h>
 
 #include <cppitertools/itertools.hpp>
 #include <filesystem>
+#include <glm/fwd.hpp>
 #include <glm/gtx/hash.hpp>
 #include <unordered_map>
 
@@ -174,7 +176,7 @@ void Model::loadCubeTexture(const std::string& path) {
   }
 }
 
-void Model::loadFromFile(std::string_view path, bool standardize) {
+void Model::loadFromFile(std::string_view path, bool standardize, bool isMoon) {
   auto basePath{std::filesystem::path{path}.parent_path().string() + "/"};
 
   tinyobj::ObjReaderConfig readerConfig;
@@ -285,7 +287,12 @@ void Model::loadFromFile(std::string_view path, bool standardize) {
   }
 
   if (standardize) {
-    this->standardize();
+
+    if(isMoon) {
+      this->standardizeMoon();
+    } else {
+      this->standardize();
+    }
   }
 
   if (!m_hasNormals) {
@@ -391,9 +398,52 @@ void Model::standardize() {
   }
 
   // Center and scale
+  fmt::print(stderr, "{}\n", "Max:");
+  fmt::print(stderr, "{}\n", max.x);
+  fmt::print(stderr, "{}\n", max.y);
+  fmt::print(stderr, "{}\n", max.z);
+
+  fmt::print(stderr, "{}\n", "Min:");
+  fmt::print(stderr, "{}\n", min.x);
+  fmt::print(stderr, "{}\n", min.y);
+  fmt::print(stderr, "{}\n", min.z);
+
   const auto center{(min + max) / 2.0f};
+
+  fmt::print(stderr, "{}\n", "Center:");
+  fmt::print(stderr, "{}\n", center.x);
+  fmt::print(stderr, "{}\n", center.y);
+  fmt::print(stderr, "{}\n", center.z);
+
   const auto scaling{2.0f / glm::length(max - min)};
   for (auto& vertex : m_vertices) {
     vertex.position = (vertex.position - center) * scaling;
   }
+}
+
+
+void Model::standardizeMoon() {
+  // Center to origin and normalize largest bound to [-1, 1]
+
+  // Get bounds
+  glm::vec3 max(std::numeric_limits<float>::lowest());
+  glm::vec3 min(std::numeric_limits<float>::max());
+  for (const auto& vertex : m_vertices) {
+    max.x = std::max(max.x, vertex.position.x);
+    max.y = std::max(max.y, vertex.position.y);
+    max.z = std::max(max.z, vertex.position.z);
+    min.x = std::min(min.x, vertex.position.x);
+    min.y = std::min(min.y, vertex.position.y);
+    min.z = std::min(min.z, vertex.position.z);
+  }
+
+  // Center and scale
+
+  glm::vec3 correction(120,0,1);
+  const auto center{(min + max + correction) / 2.0f};
+  const auto scaling{2.0f / glm::length(max - min) / 13.5f};
+  for (auto& vertex : m_vertices) {
+    vertex.position = (vertex.position - center) * scaling;
+  }
+  fmt::print(stderr, "{}\n", center.x);
 }
