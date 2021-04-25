@@ -5,6 +5,51 @@
 
 const auto epsilon{std::numeric_limits<float>::epsilon()};
 
+void TrackBall::mouseMove(const glm::ivec2 &position) {
+  if (!m_mouseTracking) return;
+
+  auto msecs{static_cast<float>(m_lastTime.restart()) * 1000.0f};
+
+  // Return if mouse cursor hasn't moved wrt last position
+  auto currentPosition{project(position)};
+  if (glm::all(glm::epsilonEqual(m_lastPosition, currentPosition, epsilon)))
+    return;
+
+  // Rotation axis
+  m_axis = glm::cross(m_lastPosition, currentPosition);
+
+  // Rotation angle
+  auto angle{glm::length(m_axis)};
+
+  m_axis = glm::normalize(m_axis);
+
+  // Compute an angle velocity that will be used as a constant rotation angle
+  // when the mouse is not being tracked.
+  m_velocity = angle / (msecs + epsilon);
+  m_velocity = glm::clamp(m_velocity, 0.0f, m_maxVelocity);
+
+  // Concatenate the rotation: R_old = R_new * R_old
+  m_rotation = glm::rotate(glm::mat4(1.0f), angle, m_axis) * m_rotation;
+
+  m_lastPosition = currentPosition;
+}
+
+void TrackBall::mousePress(const glm::ivec2 &position) {
+  m_rotation = getRotation();
+  m_mouseTracking = true;
+
+  m_lastTime.restart();
+
+  m_lastPosition = project(position);
+
+  m_velocity = 0.0f;
+}
+
+void TrackBall::mouseRelease(const glm::ivec2 &position) {
+  mouseMove(position);
+  m_mouseTracking = false;
+}
+
 void TrackBall::resizeViewport(int width, int height) {
   m_viewportWidth = static_cast<float>(width);
   m_viewportHeight = static_cast<float>(height);

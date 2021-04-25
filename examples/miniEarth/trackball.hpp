@@ -5,6 +5,9 @@
 
 class TrackBall {
  public:
+  void mouseMove(const glm::ivec2& mousePosition);
+  void mousePress(const glm::ivec2& mousePosition);
+  void mouseRelease(const glm::ivec2& mousePosition);
   void resizeViewport(int width, int height);
 
   [[nodiscard]] glm::mat4 getRotation();
