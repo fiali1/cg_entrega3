@@ -1,5 +1,5 @@
 # Mini Earth
-Modelo 3D do planeta Terra e sua Lua. Permite movimentação e rotação da câmera com o mouse.
+Modelo 3D do planeta Terra e sua Lua. Permite movimentação e rotação da câmera com o mouse, além de diferentes modos de visualização.
 
 Participantes
 * Gabriel de Mello Fiali - 11201721286
