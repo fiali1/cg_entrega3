@@ -397,23 +397,7 @@ void Model::standardize() {
     min.z = std::min(min.z, vertex.position.z);
   }
 
-  // Center and scale
-  fmt::print(stderr, "{}\n", "Max:");
-  fmt::print(stderr, "{}\n", max.x);
-  fmt::print(stderr, "{}\n", max.y);
-  fmt::print(stderr, "{}\n", max.z);
-
-  fmt::print(stderr, "{}\n", "Min:");
-  fmt::print(stderr, "{}\n", min.x);
-  fmt::print(stderr, "{}\n", min.y);
-  fmt::print(stderr, "{}\n", min.z);
-
   const auto center{(min + max) / 2.0f};
-
-  fmt::print(stderr, "{}\n", "Center:");
-  fmt::print(stderr, "{}\n", center.x);
-  fmt::print(stderr, "{}\n", center.y);
-  fmt::print(stderr, "{}\n", center.z);
 
   const auto scaling{2.0f / glm::length(max - min) / 2 };
   for (auto& vertex : m_vertices) {
@@ -444,5 +428,4 @@ void Model::standardizeMoon() {
   for (auto& vertex : m_vertices) {
     vertex.position = (vertex.position - center) * scaling;
   }
-  fmt::print(stderr, "{}\n", center.x);
 }

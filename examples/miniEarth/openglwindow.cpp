@@ -37,7 +37,7 @@ void OpenGLWindow::initializeGL() {
 
   // Load cubemap
   m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
-  moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+  // moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
 
   // Define o ângulo de rotação para se assemelhar à rotação da Terra
   m_trackBallModel.setAxis(glm::normalize(glm::vec3(-0.1, 1, 0.05)));
@@ -100,8 +100,15 @@ void OpenGLWindow::loadModel(std::string_view path) {
 }
 
 void OpenGLWindow::loadMoonModel(std::string_view path) {
-
-  moon_model.loadDiffuseTexture(getAssetsPath() + "maps/Moon.png");
+  if (m_model.specialMode) {
+    moon_model.loadDiffuseTexture(getAssetsPath() + "maps/Disco.png");
+    moon_model.loadNormalTexture(getAssetsPath() + "maps/DiscoNormal.png");
+  }
+  else {
+    std::string viewType = getViewType(m_typeIndex);
+    moon_model.loadDiffuseTexture(getAssetsPath() + "maps/Moon.png");
+    moon_model.loadNormalTexture(getAssetsPath() + "maps/MoonNormal.png");
+  }
  
   moon_model.loadFromFile(path, true, true);
   
@@ -110,10 +117,10 @@ void OpenGLWindow::loadMoonModel(std::string_view path) {
   moon_trianglesToDraw = moon_model.getNumTriangles();
 
   // Use material properties from the loaded model
-  m_Ka = moon_model.getKa();
-  m_Kd = moon_model.getKd();
-  m_Ks = moon_model.getKs();
-  m_shininess = moon_model.getShininess();
+  moon_Ka = moon_model.getKa();
+  moon_Kd = moon_model.getKd();
+  moon_Ks = moon_model.getKs();
+  moon_shininess = moon_model.getShininess();
 }
 
 void OpenGLWindow::paintGL() {
@@ -179,6 +186,11 @@ void OpenGLWindow::paintGL() {
   glUniform4fv(KdLoc, 1, &m_Kd.x);
   glUniform4fv(KsLoc, 1, &m_Ks.x);
 
+  glUniform1f(shininessLoc, moon_shininess);
+  glUniform4fv(KaLoc, 1, &moon_Ka.x);
+  glUniform4fv(KdLoc, 1, &moon_Kd.x);
+  glUniform4fv(KsLoc, 1, &moon_Ks.x);
+
   m_model.render(m_trianglesToDraw);
   moon_model.render(moon_trianglesToDraw);
   
@@ -203,7 +215,7 @@ void OpenGLWindow::renderSkybox() {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_CUBE_MAP, m_model.getCubeTexture());
-  glBindTexture(GL_TEXTURE_CUBE_MAP, moon_model.getCubeTexture());
+  //glBindTexture(GL_TEXTURE_CUBE_MAP, moon_model.getCubeTexture());
 
   glEnable(GL_CULL_FACE);
   glFrontFace(GL_CW);
@@ -420,13 +432,15 @@ void OpenGLWindow::paintUI() {
         if (m_typeIndex == 4) {
           m_model.specialMode = true;
           loadModel(getAssetsPath() + "Disco.obj");
+          loadMoonModel(getAssetsPath() + "Disco.obj");
           m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
-          moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+          //moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
         } else {
           m_model.specialMode = false;
           loadModel(getAssetsPath() + "Earth2K.obj");
+          loadMoonModel(getAssetsPath() + "Moon2K.obj");
           m_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
-          moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
+          //moon_model.loadCubeTexture(getAssetsPath() + "maps/cube/");
         }
       }
     }

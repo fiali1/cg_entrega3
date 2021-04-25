@@ -65,6 +65,16 @@ class OpenGLWindow : public abcg::OpenGLWindow {
   glm::vec4 m_Ks;
   float m_shininess{};
 
+  // Light and material properties
+  glm::vec4 moon_lightDir{-1.0f, -1.0f, -1.0f, 0.0f};
+  glm::vec4 moon_Ia{1.0f};
+  glm::vec4 moon_Id{1.0f};
+  glm::vec4 moon_Is{0.25f};
+  glm::vec4 moon_Ka;
+  glm::vec4 moon_Kd;
+  glm::vec4 moon_Ks;
+  float moon_shininess{};
+
   // Skybox vertices
   const std::array<glm::vec3, 36>  m_skyPositions{
     // Front
